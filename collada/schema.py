@@ -14,13 +14,10 @@
 """This module contains helper classes and functions for working
 with the COLLADA 1.4.1 schema."""
 
-import os
+import sys
 import lxml
 import lxml.etree
 from collada.util import bytes, BytesIO
-
-# the absolute directory of this file
-_cwd = os.path.abspath(os.path.expanduser(os.path.dirname(__file__)))
 
 
 def resource_string(file_name: str) -> str:
@@ -38,14 +35,21 @@ def resource_string(file_name: str) -> str:
     value
       The contents of the file.
     """
-    with open(os.path.join(_cwd, "resources", file_name)) as f:
-        return f.read()
+    if sys.version_info <= (3, 8):
+        from pkg_resources import resource_string
+
+        return resource_string("collada", "resources/{}".format(file_name)).decode(
+            "utf-8"
+        )
+    else:
+        from importlib import resources
+
+        return resources.files("collada").joinpath("resources", file_name).read_text()
 
 
 # get a copy of the XML schema
-# resource_string returns bytes so decode into string
-COLLADA_SCHEMA_1_4_1 = resource_string('schema-1.4.1.xml')
-XML_XSD = resource_string('xsd.xml')
+COLLADA_SCHEMA_1_4_1 = resource_string("schema-1.4.1.xml")
+XML_XSD = resource_string("xsd.xml")
 
 
 class ColladaResolver(lxml.etree.Resolver):
